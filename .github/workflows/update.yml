@@ -1,0 +1,25 @@
+name: Gosi Auto Update
+on:
+  schedule:
+    - cron: '0 0 * * *' # 매일 UTC 0시(한국시간 오전 9시) 실행
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with: {python-version: '3.9'}
+      - name: Install lib
+        run: pip install requests beautifulsoup4
+      - name: Run Robot
+        run: python scraper.py # 여기서 scraper.py를 실행합니다.
+      - name: Save Data
+        run: |
+          git config user.name 'github-actions'
+          git config user.email 'actions@github.com'
+          git add data.json
+          git commit -m "Update Gosi Data" || exit 0
+          git push
