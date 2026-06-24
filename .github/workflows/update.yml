@@ -1,27 +1,50 @@
-name: Gosi Auto Update
+name: 경남 고시공고 일일 수집
+
 on:
   schedule:
-    - cron: '0 0 * * *' # 매일 UTC 0시(한국시간 오전 9시) 실행
-  workflow_dispatch:
+    # 23:50 UTC = 08:50 KST (기존 로컬 스케줄과 동일 시각)
+    - cron: "50 23 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: gosi-update
+  cancel-in-progress: false
 
 jobs:
-  build:
+  update:
     runs-on: ubuntu-latest
-    permissions: # 이 부분을 추가해야 합니다!
-      contents: write
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Set up Python
-        uses: actions/setup-python@v4
-        with: {python-version: '3.9'}
-      - name: Install lib
-        run: pip install requests beautifulsoup4
-      - name: Run Robot
-        run: python scraper.py # 여기서 scraper.py를 실행합니다.
-      - name: Save Data
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scraper
+        env:
+          KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+          KAKAO_REFRESH_TOKEN: ${{ secrets.KAKAO_REFRESH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python scraper.py
+
+      - name: Commit and push changes
         run: |
-          git config user.name 'github-actions'
-          git config user.email 'actions@github.com'
-          git add data.json
-          git commit -m "Update Gosi Data" || exit 0
-          git push
+          git config user.name "gosi-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html data/gosi_state.json
+          if git diff --cached --quiet; then
+            echo "변경 사항 없음 — 커밋 생략"
+          else
+            git commit -m "daily update $(date -u +'%Y-%m-%d')"
+            git push
+          fi
