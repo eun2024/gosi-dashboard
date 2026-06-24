@@ -52,6 +52,7 @@ CA_BUNDLE = _OS_CA_BUNDLE if os.path.exists(_OS_CA_BUNDLE) else True
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 STATE_PATH = os.path.join(REPO_ROOT, "data", "gosi_state.json")
 KAKAO_META_PATH = os.path.join(REPO_ROOT, "data", "kakao_meta.json")
+TODAY_TARGETS_PATH = os.path.join(REPO_ROOT, "data", "today_targets.json")
 DASHBOARD_PATH = os.path.join(REPO_ROOT, "index.html")
 DASHBOARD_URL = "https://eun2024.github.io/gosi-dashboard/"
 
@@ -443,6 +444,30 @@ def chunk_messages(prefix, lines, limit=190):
     return messages
 
 
+def update_today_targets(targets):
+    """오늘의 키워드 매칭 신규 항목을 공개 JSON으로 저장 (Cowork 예약 작업이 읽어 카카오 MCP로 발송)."""
+    payload = {
+        "date": TODAY_STR,
+        "generated_at": NOW.strftime("%Y-%m-%dT%H:%M:%S+09:00"),
+        "count": len(targets),
+        "targets": [
+            {
+                "sigun_name": t["sigun_name"],
+                "title": t["title"],
+                "date": t["date"],
+                "dept": t["dept"],
+                "url": t["url"],
+                "summary": t["summary"],
+            }
+            for t in targets
+        ],
+    }
+    os.makedirs(os.path.dirname(TODAY_TARGETS_PATH), exist_ok=True)
+    with open(TODAY_TARGETS_PATH, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+    log(f"today_targets.json 갱신 완료 ({len(targets)}건).")
+
+
 def send_kakao_notifications(targets, warning_line=None):
     rest_api_key = os.environ.get("KAKAO_REST_API_KEY", "")
     refresh_token = os.environ.get("KAKAO_REFRESH_TOKEN", "")
@@ -574,6 +599,7 @@ def main():
     if not dry_run:
         save_state(state)
         update_dashboard(all_targets)
+        update_today_targets(all_targets)
 
         remaining = check_kakao_token_warning()
         warning_line = None
