@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>경남 8개 시군 고시공고 대시보드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f5f7;
+    --surface:#ffffff;
+    --ink:#1a1d21;
+    --ink-2:#5a6068;
+    --ink-3:#8b9098;
+    --line:#e4e7eb;
+    --accent:#1f5fa5;
+    --accent-soft:#eaf1fa;
+    --good:#27a567;
+    --good-soft:#e1f5ee;
+    --radius:14px;
+    --radius-sm:8px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.6;
+    padding:24px 16px 64px;
+  }
+  .wrap{max-width:960px;margin:0 auto;}
+
+  header{
+    display:flex;align-items:flex-end;justify-content:space-between;
+    flex-wrap:wrap;gap:16px;margin-bottom:24px;
+  }
+  h1{font-size:24px;font-weight:700;letter-spacing:-0.02em;margin-bottom:6px;}
+  .sub{font-size:14px;color:var(--ink-2);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--good);display:inline-block;}
+
+  .stats{display:flex;gap:10px;}
+  .stat{
+    background:var(--surface);border:1px solid var(--line);
+    border-radius:var(--radius-sm);padding:10px 16px;text-align:center;min-width:68px;
+  }
+  .stat .label{font-size:12px;color:var(--ink-2);margin-bottom:2px;}
+  .stat .num{font-size:22px;font-weight:700;line-height:1;}
+
+  .controls{margin-bottom:14px;}
+  .controls input{
+    width:100%;height:42px;border:1px solid var(--line);border-radius:var(--radius-sm);
+    padding:0 14px;font-size:15px;font-family:inherit;background:var(--surface);color:var(--ink);
+    transition:border-color .15s,box-shadow .15s;
+  }
+  .controls input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .controls input::placeholder{color:var(--ink-3);}
+
+  .filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:22px;}
+  .filters button{
+    font-family:inherit;font-size:13px;padding:6px 14px;border-radius:20px;cursor:pointer;
+    border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
+    transition:all .12s;
+  }
+  .filters button:hover{border-color:var(--accent);color:var(--accent);}
+  .filters button.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+
+  .list{display:flex;flex-direction:column;gap:12px;}
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;transition:border-color .15s,transform .15s;
+  }
+  .card:hover{border-color:#cfd5dc;transform:translateY(-1px);}
+  .meta{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:7px;}
+  .tag{font-size:12px;font-weight:500;padding:3px 11px;border-radius:6px;}
+  .meta .when,.meta .dept{font-size:12px;color:var(--ink-3);}
+  .title{font-size:16px;font-weight:500;margin-bottom:5px;letter-spacing:-0.01em;}
+  .summary{font-size:13.5px;color:var(--ink-2);margin-bottom:10px;}
+  .link{font-size:13px;color:var(--accent);text-decoration:none;font-weight:500;}
+  .link:hover{text-decoration:underline;}
+
+  .empty{text-align:center;color:var(--ink-3);font-size:14px;padding:48px 0;display:none;}
+
+  footer{margin-top:32px;text-align:center;font-size:12px;color:var(--ink-3);}
+
+  .section-divider{height:1px;background:var(--line);margin:40px 0 32px;}
+
+  /* ---- 수집대상 섹션 전용 ---- */
+  #target .tag{font-weight:700;}
+  #target .meta{gap:8px;margin-bottom:6px;}
+  #target .list{margin-bottom:32px;}
+  #target .card{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  #target .card-left{display:flex;flex-direction:column;gap:6px;min-width:220px;}
+  #target .badge{font-size:11px;font-weight:500;padding:2px 9px;border-radius:20px;background:var(--accent-soft);color:var(--accent);}
+  #target .status{font-size:11px;font-weight:500;padding:2px 9px;border-radius:20px;background:var(--good-soft);color:#0c6b45;display:flex;align-items:center;gap:4px;}
+  #target .status .dot{width:6px;height:6px;}
+  #target .board-name{font-size:16px;font-weight:500;letter-spacing:-0.01em;}
+  #target .url-text{font-size:12.5px;color:var(--ink-3);word-break:break-all;}
+  #target .card-right{display:flex;align-items:center;gap:10px;}
+  #target .link-btn{
+    font-size:13px;color:#fff;background:var(--accent);text-decoration:none;font-weight:500;
+    padding:8px 16px;border-radius:8px;white-space:nowrap;transition:background .12s;
+  }
+  #target .link-btn:hover{background:#174a82;}
+
+  .section-title{font-size:14px;font-weight:700;color:var(--ink-2);margin:28px 0 12px;text-transform:uppercase;letter-spacing:.04em;}
+
+  table.reg{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;font-size:13.5px;}
+  table.reg caption{text-align:left;font-size:13px;color:var(--ink-2);padding:10px 4px;}
+  table.reg th,table.reg td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;}
+  table.reg th{background:#fafbfc;color:var(--ink-2);font-weight:500;font-size:12.5px;}
+  table.reg tr:last-child td{border-bottom:none;}
+  table.reg a{color:var(--accent);text-decoration:none;}
+  table.reg a:hover{text-decoration:underline;}
+
+  @media (max-width:520px){
+    h1{font-size:21px;}
+    .card{padding:14px 15px;}
+    #target .card{flex-direction:column;align-items:flex-start;}
+    #target .card-right{width:100%;}
+    #target .link-btn{width:100%;text-align:center;}
+    table.reg{font-size:12px;}
+    table.reg th,table.reg td{padding:8px 6px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section id="daily">
+    <header>
+      <div>
+        <h1>고시공고 일일 수집</h1>
+        <div class="sub"><span class="dot"></span><span id="collect-date">2026년 6월 24일 (수)</span> · 키워드 매칭 신규 공고 · 경남 8개 시군</div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="label">신규</div><div class="num" id="stat-total">0</div></div>
+        <div class="stat"><div class="label">시군</div><div class="num">8</div></div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <input type="text" id="search" placeholder="제목·요약 검색" aria-label="공고 검색">
+    </div>
+
+    <div class="filters" id="filters"></div>
+
+    <div class="list" id="list"></div>
+    <p class="empty" id="empty">조건에 맞는 공고가 없습니다.</p>
+
+    <footer>매일 오전 8시 50분 자동 수집 · 8개 시군 고시공고 게시판 원문 직접 연동 · 9개 키워드 매칭분만 표시</footer>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <section id="target">
+    <header>
+      <div>
+        <h1>고시공고 수집 대상 목록</h1>
+        <div class="sub"><span class="dot"></span><span>최종 확인 2026년 6월 24일</span> · 경남 8개 시군 · 매일 수집 작업 대상</div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="label">시군</div><div class="num">8</div></div>
+        <div class="stat"><div class="label">정상</div><div class="num" style="color:var(--good)">8</div></div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <input type="text" id="search-target" placeholder="시군명·게시판명 검색" aria-label="대상 검색">
+    </div>
+
+    <div class="list" id="list-target"></div>
+    <p class="empty" id="empty-target">조건에 맞는 항목이 없습니다.</p>
+
+    <div class="section-title">전체 표</div>
+    <table class="reg">
+      <caption>시군별 고시공고 게시판 URL 및 수집방식 (2026-06-24 기준 전체 정상 접속 확인)</caption>
+      <thead>
+        <tr><th>시군</th><th>게시판명</th><th>URL</th><th>수집방식</th><th>비고</th></tr>
+      </thead>
+      <tbody id="tbody-target"></tbody>
+    </table>
+
+    <footer>매일 오전 8시 자동 수집 · 신규 공고 발생 시 키워드 매칭 후 카카오톡 발송 및 첨부파일 저장</footer>
+  </section>
+
+</div>
+
+<script>
+/* ================= 일일 수집 섹션 ================= */
+(function(){
+  /* ============================================================
+     ▼▼▼ 매일 이 부분만 교체하면 됩니다 ▼▼▼
+     - COLLECT_DATE : 수집 날짜 (화면 상단 표시)
+     - DATA         : 당일 신규 공고 목록 (키워드 매칭된 발송대상만, 각 시군 게시판에서 직접 수집한 실제 데이터)
+         sigun : 0=진주시 1=사천시 2=산청군 3=함양군
+                 4=거창군 5=합천군 6=남해군 7=하동군
+         title : 공고 제목
+         date  : 게시일 (MM-DD)
+         summary : 매칭 키워드·공고기간·고시번호 등 게시판에서 확인된 정보
+         dept  : 담당부서
+         url   : 원문 링크
+     ============================================================ */
+  const COLLECT_DATE = "2026년 6월 24일 (수)";
+
+  const DATA = [
+    {sigun:4, title:"손실보상협의 공시송달 공고(거창군 스마트농업 육성지구 조성사업)", date:"06-24", summary:"키워드 '조성' 매칭 · 거창군 공고 제2026-990호 · 공고기간 2026-06-24~2026-07-08", dept:"미래농업과", url:"https://www.geochang.go.kr/00445/00451.web?amode=view&not_ancmt_mgt_no=47197"},
+    {sigun:4, title:"거창군 환경기초시설 운영 기자재 불용물품 매각 전자입찰 공고", date:"06-24", summary:"키워드 '환경' 매칭 · 거창군 수도사업소 공고 제2026-68호 · 공고기간 2026-06-24~2026-07-02", dept:"수도사업소", url:"https://www.geochang.go.kr/00445/00451.web?amode=view&not_ancmt_mgt_no=47195"},
+  ];
+  /* ============================================================
+     ▲▲▲ 여기까지만 교체 ▲▲▲   (아래 코드는 손대지 않아도 됩니다)
+     ============================================================ */
+
+  const SIGUN = ["진주시","사천시","산청군","함양군","거창군","합천군","남해군","하동군"];
+  const TAG = [
+    ["#eaf1fa","#0c447c"],["#e1f5ee","#085041"],["#efeefe","#3c3489"],["#faece7","#712b13"],
+    ["#fbeaf0","#72243e"],["#faeeda","#633806"],["#eaf3de","#27500a"],["#f1efe8","#444441"]
+  ];
+
+  document.getElementById("collect-date").textContent = COLLECT_DATE;
+
+  let activeFilter = -1, searchTerm = "";
+
+  const filtersEl = document.getElementById("filters");
+  function makeBtn(label, idx){
+    const b = document.createElement("button");
+    b.textContent = label; b.dataset.idx = idx;
+    if(idx === activeFilter) b.classList.add("on");
+    filtersEl.appendChild(b);
+  }
+  makeBtn("전체", -1);
+  SIGUN.forEach((s,i)=>makeBtn(s, i));
+
+  filtersEl.addEventListener("click", e=>{
+    if(e.target.tagName !== "BUTTON") return;
+    activeFilter = Number(e.target.dataset.idx);
+    [...filtersEl.children].forEach(b=>b.classList.toggle("on", Number(b.dataset.idx)===activeFilter));
+    render();
+  });
+
+  document.getElementById("search").addEventListener("input", e=>{
+    searchTerm = e.target.value.trim().toLowerCase();
+    render();
+  });
+
+  const listEl = document.getElementById("list");
+  const emptyEl = document.getElementById("empty");
+
+  function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));}
+
+  function render(){
+    const rows = DATA.filter(d=>{
+      if(activeFilter !== -1 && d.sigun !== activeFilter) return false;
+      if(searchTerm){
+        const hay = (d.title + " " + d.summary).toLowerCase();
+        if(!hay.includes(searchTerm)) return false;
+      }
+      return true;
+    });
+    document.getElementById("stat-total").textContent = rows.length;
+    listEl.innerHTML = "";
+    emptyEl.style.display = rows.length ? "none" : "block";
+    rows.forEach(d=>{
+      const [bg,fg] = TAG[d.sigun];
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML =
+        '<div class="meta">'+
+          '<span class="tag" style="background:'+bg+';color:'+fg+'">'+esc(SIGUN[d.sigun])+'</span>'+
+          '<span class="when">'+esc(d.date)+'</span>'+
+          '<span class="dept">'+esc(d.dept)+'</span>'+
+        '</div>'+
+        '<div class="title">'+esc(d.title)+'</div>'+
+        '<div class="summary">'+esc(d.summary)+'</div>'+
+        '<a class="link" href="'+esc(d.url||"#")+'" target="_blank" rel="noopener">원문 보기 →</a>';
+      listEl.appendChild(card);
+    });
+  }
+
+  render();
+})();
+
+/* ================= 수집 대상 섹션 ================= */
+(function(){
+  const DATA = [
+    {sigun:"진주시", board:"고시/공고", url:"https://www.jinju.go.kr/05586.web", method:"새올전자민원(saeol)", note:"기본 GET 검색 가능"},
+    {sigun:"사천시", board:"공고/고시", url:"https://www.sacheon.go.kr/news/00009/00014.web", method:"새올 임베드(요약형)", note:"목록 요약 위주, 상세는 별도 확인"},
+    {sigun:"하동군", board:"공고고시", url:"https://www.hadong.go.kr/media/00012.web", method:"새올전자민원(saeol)", note:"기본 GET 검색 가능"},
+    {sigun:"합천군", board:"고시공고", url:"https://www.hc.go.kr/04923/04924/04948.web", method:"새올전자민원(saeol)", note:"첨부 링크가 DownloadEx.do 래퍼 방식"},
+    {sigun:"거창군", board:"입법/공고/고시", url:"https://www.geochang.go.kr/00445/00451.web", method:"새올전자민원(saeol)", note:"기본 GET 검색 가능"},
+    {sigun:"산청군", board:"고시/공고", url:"https://www.sancheong.go.kr/www/selectBbsNttList.do?bbsNo=118&key=158", method:"전자정부표준프레임워크(eGovFrame)", note:"제목검색은 searchCnd=SJ 필요"},
+    {sigun:"남해군", board:"공고/고시", url:"https://www.namhae.go.kr/modules/saeol/gosi.do?pageCd=SM010110000&siteGubun=socialm", method:"새올전자민원(saeol)", note:"상세조회 시 amode=_view(밑줄 포함) 필요"},
+    {sigun:"함양군", board:"고시/공고", url:"https://www.hygn.go.kr/00429/00543/00549.web", method:"iframe + POST 액션", note:"화면은 iframe, 목록은 POST OfrAction.do로 수집"},
+  ];
+
+  let searchTerm = "";
+
+  const listEl = document.getElementById("list-target");
+  const emptyEl = document.getElementById("empty-target");
+  const tbodyEl = document.getElementById("tbody-target");
+
+  function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));}
+
+  function render(){
+    const rows = DATA.filter(d=>{
+      if(!searchTerm) return true;
+      const hay = (d.sigun + " " + d.board + " " + d.method).toLowerCase();
+      return hay.includes(searchTerm);
+    });
+
+    listEl.innerHTML = "";
+    emptyEl.style.display = rows.length ? "none" : "block";
+    rows.forEach(d=>{
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML =
+        '<div class="card-left">'+
+          '<div class="meta">'+
+            '<span class="tag" style="background:var(--accent-soft);color:var(--accent)">'+esc(d.sigun)+'</span>'+
+            '<span class="status"><span class="dot" style="background:#0c6b45"></span>정상</span>'+
+            '<span class="badge">'+esc(d.method)+'</span>'+
+          '</div>'+
+          '<div class="board-name">'+esc(d.board)+'</div>'+
+          '<div class="url-text">'+esc(d.url)+'</div>'+
+        '</div>'+
+        '<div class="card-right">'+
+          '<a class="link-btn" href="'+esc(d.url)+'" target="_blank" rel="noopener">게시판 열기 →</a>'+
+        '</div>';
+      listEl.appendChild(card);
+    });
+
+    tbodyEl.innerHTML = "";
+    rows.forEach(d=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td>'+esc(d.sigun)+'</td>'+
+        '<td>'+esc(d.board)+'</td>'+
+        '<td><a href="'+esc(d.url)+'" target="_blank" rel="noopener">'+esc(d.url)+'</a></td>'+
+        '<td>'+esc(d.method)+'</td>'+
+        '<td>'+esc(d.note)+'</td>';
+      tbodyEl.appendChild(tr);
+    });
+  }
+
+  document.getElementById("search-target").addEventListener("input", e=>{
+    searchTerm = e.target.value.trim().toLowerCase();
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
