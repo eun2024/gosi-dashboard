@@ -43,7 +43,7 @@ jobs:
         run: |
           git config user.name "gosi-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add index.html data/gosi_state.json
+          git add index.html data/gosi_state.json data/today_targets.json
           if git diff --cached --quiet; then
             echo "변경 사항 없음 — 커밋 생략"
           else
