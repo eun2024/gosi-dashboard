@@ -35,6 +35,8 @@ jobs:
           KAKAO_REFRESH_TOKEN: ${{ secrets.KAKAO_REFRESH_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
+          PROXY_URL: ${{ secrets.PROXY_URL }}
+          PROXY_KEY: ${{ secrets.PROXY_KEY }}
         run: python scraper.py
 
       - name: Commit and push changes
