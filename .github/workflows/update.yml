@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions: # 이 부분을 추가해야 합니다!
+      contents: write
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
