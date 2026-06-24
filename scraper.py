@@ -247,7 +247,32 @@ PARSERS = {
 }
 
 
+# 해외 IP(GitHub Actions 러너) 접속이 차단되는 사이트 → 한국 리전(Cloud Function) 경유.
+# 원인: connect timeout/DNS 실패가 5개 사이트에서만 재현 — 비한국 IP 차단으로 확인됨.
+PROXY_SITES = {"진주시", "합천군", "남해군", "산청군", "함양군"}
+PROXY_URL = os.environ.get("PROXY_URL", "")
+PROXY_KEY = os.environ.get("PROXY_KEY", "")
+
+
+def fetch_site_via_proxy(name):
+    """한국 리전 Cloud Function을 통해 수집 (해외 IP 차단 우회).
+    함수 쪽은 수집(파싱)만 하고, 중복판단/대시보드/카카오 발송은 그대로 이 스크립트가 담당."""
+    resp = requests.post(
+        PROXY_URL,
+        json={"site": name},
+        headers={"X-Proxy-Key": PROXY_KEY},
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    if "error" in data:
+        raise RuntimeError(data["error"])
+    return data["items"]
+
+
 def fetch_site(name, conf):
+    if name in PROXY_SITES and PROXY_URL:
+        return fetch_site_via_proxy(name)
     fmt = conf["format"]
     if fmt == "hygn_post":
         return fetch_hygn_post()
