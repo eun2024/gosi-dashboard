@@ -354,3 +354,10 @@
 </script>
 </body>
 </html>
+# gosi-dashboard 저장소를 클론한 위치에서
+cp -r /path/to/gosi-actions/* /path/to/gosi-dashboard/
+cp -r /path/to/gosi-actions/.github /path/to/gosi-dashboard/
+cd /path/to/gosi-dashboard
+git add .
+git commit -m "GitHub Actions 자동 수집 파이프라인 추가"
+git push
