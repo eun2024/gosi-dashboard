@@ -36,6 +36,9 @@ COLLECT_DATE = f"{NOW.year}년 {NOW.month}월 {NOW.day}일 ({WEEKDAY_KR})"
 
 KEYWORDS = ["도시계획", "개발행위", "건축", "인허가", "환경", "산림", "조성", "사업실시", "개발사업"]
 
+# 채용/모집 공고는 위 키워드(예: '환경', '산림', '조성' 등)에 우연히 걸려도 제외한다.
+EXCLUDE_KEYWORDS = ["채용", "근로자 모집", "인력 채용", "채용공고", "공무직", "기간제근로자"]
+
 UA_HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -312,6 +315,9 @@ def update_seen_ids(state, site_name, all_ids):
 # --------------------------------------------------------------------------
 
 def match_keyword(title):
+    for ex in EXCLUDE_KEYWORDS:
+        if ex in title:
+            return None
     for kw in KEYWORDS:
         if kw in title:
             return kw
@@ -609,15 +615,4 @@ def main():
 
         send_kakao_notifications(all_targets, warning_line)
     else:
-        log("(dry-run 모드: state/대시보드 저장, 카카오 발송을 수행하지 않음)")
-        for t in all_targets:
-            log(f"  - [{t['sigun_name']}] {t['title']} :: {t['summary']}")
-
-    if errors:
-        log(f"수집 실패 사이트: {', '.join(errors)} (전체 작업은 계속 진행됨)")
-
-    log("완료.")
-
-
-if __name__ == "__main__":
-    main()
+        log("(dry-run 모드: state/대시보드 저장, 카카
